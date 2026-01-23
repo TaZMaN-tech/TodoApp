@@ -73,5 +73,5 @@ struct TaskViewModel {
 // MARK: - Module Assembly Protocol
 
 protocol TaskListModuleAssemblyProtocol {
-    //func createModule() -> TaskListViewController
+    func createModule() -> TaskListViewController
 }
