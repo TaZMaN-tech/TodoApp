@@ -19,5 +19,10 @@ final class TaskEditRouter {
 extension TaskEditRouter: TaskEditRouterProtocol {
     
     func close() {
+        if viewController?.presentingViewController != nil {
+            viewController?.dismiss(animated: true)
+        } else {
+            viewController?.navigationController?.popViewController(animated: true)
+        }
     }
 }
