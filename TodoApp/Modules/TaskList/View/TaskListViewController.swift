@@ -140,6 +140,8 @@ final class TaskListViewController: UIViewController {
 extension TaskListViewController: TaskListViewInput {
     
     func displayTasks(_ viewModels: [TaskViewModel]) {
+        ThreadSafetyHelpers.assertMainThread()
+        
         self.viewModels = viewModels
         
         emptyStateLabel.isHidden = true
@@ -153,6 +155,8 @@ extension TaskListViewController: TaskListViewInput {
     }
     
     func showLoading() {
+        ThreadSafetyHelpers.assertMainThread()
+        
         if viewModels.isEmpty && !refreshControl.isRefreshing {
             activityIndicator.startAnimating()
             tableView.isHidden = true
@@ -161,6 +165,8 @@ extension TaskListViewController: TaskListViewInput {
     }
     
     func hideLoading() {
+        ThreadSafetyHelpers.assertMainThread()
+        
         activityIndicator.stopAnimating()
         
         if refreshControl.isRefreshing {
@@ -169,6 +175,8 @@ extension TaskListViewController: TaskListViewInput {
     }
     
     func showError(message: String) {
+        ThreadSafetyHelpers.assertMainThread()
+        
         hideLoading()
         
         let alert = UIAlertController(
@@ -183,6 +191,8 @@ extension TaskListViewController: TaskListViewInput {
     }
     
     func showEmptyState(message: String) {
+        ThreadSafetyHelpers.assertMainThread()
+        
         tableView.isHidden = true
         activityIndicator.stopAnimating()
         

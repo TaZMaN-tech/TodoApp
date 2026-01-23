@@ -36,6 +36,11 @@ final class CoreDataStack {
         
         persistentContainer.viewContext.automaticallyMergesChangesFromParent = true
         persistentContainer.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        
+        assert(
+            persistentContainer.viewContext.concurrencyType == .mainQueueConcurrencyType,
+            "ViewContext должен быть на main queue"
+        )
     }
     
     // MARK: - Background Context

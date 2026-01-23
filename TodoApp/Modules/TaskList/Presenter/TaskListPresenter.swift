@@ -132,63 +132,90 @@ extension TaskListPresenter: TaskListInteractorOutput {
             createViewModel(from: entity)
         }
         
-        view?.hideLoading()
-        
-        if viewModels.isEmpty {
-            let message = currentSearchQuery.isEmpty
-            ? "У вас пока нет задач.\nСоздайте первую!"
-            : "Ничего не найдено по запросу \"\(currentSearchQuery)\""
-            view?.showEmptyState(message: message)
-        } else {
-            view?.displayTasks(viewModels)
+        ThreadSafetyHelpers.ensureMainThread { [weak self] in
+            guard let self = self else { return }
+            
+            self.view?.hideLoading()
+            
+            if self.viewModels.isEmpty {
+                let message = self.currentSearchQuery.isEmpty
+                ? "У вас пока нет задач.\nСоздайте первую!"
+                : "Ничего не найдено по запросу \"\(self.currentSearchQuery)\""
+                self.view?.showEmptyState(message: message)
+            } else {
+                self.view?.displayTasks(self.viewModels)
+            }
         }
-        
     }
     
     func didFailToLoadTasks(with error: Error) {
-        view?.hideLoading()
         let message = formatError(error)
-        view?.showError(message: message)
+        
+        ThreadSafetyHelpers.ensureMainThread { [weak self] in
+            guard let self = self else { return }
+            self.view?.hideLoading()
+            self.view?.showError(message: message)
+        }
     }
     
     func didDeleteTask(taskId: Int64) {
-        viewModels.removeAll { $0.id == taskId }
-        
-        if viewModels.isEmpty {
-            let message = currentSearchQuery.isEmpty
-            ? "У вас пока нет задач.\nСоздайте первую!"
-            : "Ничего не найдено по запросу \"\(currentSearchQuery)\""
-            view?.showEmptyState(message: message)
-        } else {
-            view?.displayTasks(viewModels)
+        ThreadSafetyHelpers.ensureMainThread { [weak self] in
+            guard let self = self else { return }
+            
+            self.viewModels.removeAll { $0.id == taskId }
+            
+            if self.viewModels.isEmpty {
+                let message = self.currentSearchQuery.isEmpty
+                ? "У вас пока нет задач.\nСоздайте первую!"
+                : "Ничего не найдено по запросу \"\(self.currentSearchQuery)\""
+                self.view?.showEmptyState(message: message)
+            } else {
+                self.view?.displayTasks(self.viewModels)
+            }
         }
     }
     
     func didFailToDeleteTask(with error: Error) {
         let message = "Не удалось удалить задачу: \(formatError(error))"
-        view?.showError(message: message)
+        
+        ThreadSafetyHelpers.ensureMainThread { [weak self] in
+            guard let self = self else { return }
+            self.view?.showError(message: message)
+        }
     }
     
     func didUpdateTask(_ task: TaskEntity) {
-        if let index = viewModels.firstIndex(where: { $0.id == task.id }) {
-            let updatedViewModel = createViewModel(from: task)
-            viewModels[index] = updatedViewModel
-            view?.displayTasks(viewModels)
+        ThreadSafetyHelpers.ensureMainThread { [weak self] in
+            guard let self = self else { return }
+        
+            if let index = self.viewModels.firstIndex(where: { $0.id == task.id }) {
+                let updatedViewModel = self.createViewModel(from: task)
+                self.viewModels[index] = updatedViewModel
+                self.view?.displayTasks(self.viewModels)
+            }
         }
     }
     
     func didFailToUpdateTask(with error: Error) {
-        interactor.loadTasks()
         let message = "Не удалось обновить задачу: \(formatError(error))"
-        view?.showError(message: message)
+        
+        ThreadSafetyHelpers.ensureMainThread { [weak self] in
+            guard let self = self else { return }
+            self.interactor.loadTasks()
+            self.view?.showError(message: message)
+        }
     }
     
     func didStartLoading() {
-        view?.showLoading()
+        ThreadSafetyHelpers.ensureMainThread { [weak self] in
+            self?.view?.showLoading()
+        }
     }
     
     func didFinishLoading() {
-        view?.hideLoading()
+        ThreadSafetyHelpers.ensureMainThread { [weak self] in
+            self?.view?.hideLoading()
+        }
     }
 }
 
