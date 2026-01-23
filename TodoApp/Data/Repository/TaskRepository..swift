@@ -10,6 +10,10 @@ import CoreData
 
 final class TaskRepository: TaskRepositoryProtocol {
     
+    // MARK: - Singleton
+    
+    static let shared = TaskRepository()
+    
     // MARK: - Properties
     
     private let coreDataStack: CoreDataStack
@@ -90,7 +94,7 @@ final class TaskRepository: TaskRepositoryProtocol {
                 let managedObject = TaskManagedObject.create(from: task, in: context)
                 try context.save()
                 let savedEntity = managedObject.toEntity()
-
+                
                 DispatchQueue.main.async {
                     completion(.success(savedEntity))
                 }
