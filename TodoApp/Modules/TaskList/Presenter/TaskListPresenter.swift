@@ -27,6 +27,33 @@ final class TaskListPresenter {
     
     private var viewModels: [TaskViewModel] = []
     private var currentSearchQuery: String = ""
+    
+    // MARK: - Initialization
+    
+    init() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(taskListDidChange),
+            name: .taskListDidChange,
+            object: nil
+        )
+    }
+    
+    // MARK: - Deinitialization
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    // MARK: - Notification Handlers
+    
+    @objc private func taskListDidChange() {
+        if currentSearchQuery.isEmpty {
+            interactor.loadTasks()
+        } else {
+            interactor.searchTasks(query: currentSearchQuery)
+        }
+    }
 }
 
 // MARK: - TaskListViewOutput
@@ -172,6 +199,7 @@ extension TaskListPresenter: TaskListInteractorOutput {
             } else {
                 self.view?.displayTasks(self.viewModels)
             }
+            NotificationCenter.default.post(name: .taskListDidChange, object: nil)
         }
     }
     
@@ -187,7 +215,7 @@ extension TaskListPresenter: TaskListInteractorOutput {
     func didUpdateTask(_ task: TaskEntity) {
         ThreadSafetyHelpers.ensureMainThread { [weak self] in
             guard let self = self else { return }
-        
+            
             if let index = self.viewModels.firstIndex(where: { $0.id == task.id }) {
                 let updatedViewModel = self.createViewModel(from: task)
                 self.viewModels[index] = updatedViewModel

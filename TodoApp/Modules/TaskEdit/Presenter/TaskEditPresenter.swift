@@ -98,6 +98,9 @@ extension TaskEditPresenter: TaskEditInteractorOutput {
         ThreadSafetyHelpers.ensureMainThread { [weak self] in
             guard let self = self else { return }
             self.view?.hideLoading()
+            
+            NotificationCenter.default.post(name: .taskListDidChange, object: nil)
+            
             self.router.close()
         }
     }
@@ -115,6 +118,9 @@ extension TaskEditPresenter: TaskEditInteractorOutput {
         ThreadSafetyHelpers.ensureMainThread { [weak self] in
             guard let self = self else { return }
             self.view?.hideLoading()
+            
+            NotificationCenter.default.post(name: .taskListDidChange, object: nil)
+            
             self.router.close()
         }
     }
