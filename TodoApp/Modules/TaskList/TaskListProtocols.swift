@@ -61,13 +61,27 @@ protocol TaskListRouterProtocol: AnyObject {
 
 // MARK: - View Model
 
-struct TaskViewModel {
+nonisolated struct TaskViewModel: Hashable {
     let id: Int64
     let title: String
     let description: String?
     let createdDateString: String
     let isCompleted: Bool
     let entity: TaskEntity
+    
+    // MARK: - Hashable
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: TaskViewModel, rhs: TaskViewModel) -> Bool {
+        return lhs.id == rhs.id &&
+        lhs.title == rhs.title &&
+        lhs.description == rhs.description &&
+        lhs.createdDateString == rhs.createdDateString &&
+        lhs.isCompleted == rhs.isCompleted
+    }
 }
 
 // MARK: - Module Assembly Protocol

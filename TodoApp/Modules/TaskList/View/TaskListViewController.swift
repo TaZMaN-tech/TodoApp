@@ -9,6 +9,12 @@ import UIKit
 
 final class TaskListViewController: UIViewController {
     
+    // MARK: - Section Definition
+    
+    nonisolated private enum Section: Hashable {
+        case main
+    }
+    
     // MARK: - Properties
     
     var presenter: TaskListViewOutput!
@@ -19,13 +25,44 @@ final class TaskListViewController: UIViewController {
         let table = UITableView(frame: .zero, style: .plain)
         table.translatesAutoresizingMaskIntoConstraints = false
         table.delegate = self
-        table.dataSource = self
         table.register(TaskCell.self, forCellReuseIdentifier: TaskCell.reuseIdentifier)
         table.rowHeight = UITableView.automaticDimension
         table.estimatedRowHeight = 80
         table.separatorStyle = .singleLine
         table.backgroundColor = .systemBackground
         return table
+    }()
+    
+    /// Diffable Data Source для таблицы
+    private lazy var dataSource: UITableViewDiffableDataSource<Section, TaskViewModel> = {
+        let dataSource = UITableViewDiffableDataSource<Section, TaskViewModel>(
+            tableView: tableView
+        ) { [weak self] tableView, indexPath, viewModel in
+            guard let self = self else { return UITableViewCell() }
+            
+            guard let cell = tableView.dequeueReusableCell(
+                withIdentifier: TaskCell.reuseIdentifier,
+                for: indexPath
+            ) as? TaskCell else {
+                return UITableViewCell()
+            }
+            
+            cell.configure(with: viewModel)
+            
+            cell.onToggleCompletion = { [weak self] in
+                if let currentSnapshot = self?.dataSource.snapshot(),
+                   let index = currentSnapshot.indexOfItem(viewModel) {
+                    self?.presenter.didToggleTaskCompletion(
+                        at: index,
+                        isCompleted: !viewModel.isCompleted
+                    )
+                }
+            }
+            
+            return cell
+        }
+        
+        return dataSource
     }()
     
     private lazy var searchController: UISearchController = {
@@ -91,32 +128,25 @@ final class TaskListViewController: UIViewController {
         addButton.tintColor = .systemYellow
         navigationItem.rightBarButtonItem = addButton
         
-        // Настраиваем search controller
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
         definesPresentationContext = true
         
-        // Добавляем subviews
         view.addSubview(tableView)
         view.addSubview(activityIndicator)
         view.addSubview(emptyStateLabel)
         
-        // Добавляем refresh control к таблице
         tableView.refreshControl = refreshControl
         
-        // Устанавливаем constraints
         NSLayoutConstraint.activate([
-            // Table view
             tableView.topAnchor.constraint(equalTo: view.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
-            // Activity indicator
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             
-            // Empty state label
             emptyStateLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyStateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             emptyStateLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
@@ -140,14 +170,15 @@ final class TaskListViewController: UIViewController {
 extension TaskListViewController: TaskListViewInput {
     
     func displayTasks(_ viewModels: [TaskViewModel]) {
-        ThreadSafetyHelpers.assertMainThread()
-        
-        self.viewModels = viewModels
-        
         emptyStateLabel.isHidden = true
         
         tableView.isHidden = false
-        tableView.reloadData()
+        
+        var snapshot = NSDiffableDataSourceSnapshot<Section, TaskViewModel>()
+        snapshot.appendSections([Section.main])
+        snapshot.appendItems(viewModels)
+        
+        dataSource.apply(snapshot, animatingDifferences: true)
         
         if refreshControl.isRefreshing {
             refreshControl.endRefreshing()
@@ -157,7 +188,7 @@ extension TaskListViewController: TaskListViewInput {
     func showLoading() {
         ThreadSafetyHelpers.assertMainThread()
         
-        if viewModels.isEmpty && !refreshControl.isRefreshing {
+        if dataSource.snapshot().numberOfItems == 0 && !refreshControl.isRefreshing {
             activityIndicator.startAnimating()
             tableView.isHidden = true
             emptyStateLabel.isHidden = true
@@ -205,35 +236,6 @@ extension TaskListViewController: TaskListViewInput {
     }
 }
 
-// MARK: - UITableViewDataSource
-
-extension TaskListViewController: UITableViewDataSource {
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModels.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(
-            withIdentifier: TaskCell.reuseIdentifier,
-            for: indexPath
-        ) as? TaskCell else {
-            return UITableViewCell()
-        }
-        
-        let viewModel = viewModels[indexPath.row]
-        cell.configure(with: viewModel)
-        
-        cell.onToggleCompletion = { [weak self] in
-            self?.presenter.didToggleTaskCompletion(
-                at: indexPath.row,
-                isCompleted: !viewModel.isCompleted
-            )
-        }
-        
-        return cell
-    }
-}
 
 // MARK: - UITableViewDelegate
 
@@ -241,7 +243,12 @@ extension TaskListViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        presenter.didSelectTask(at: indexPath.row)
+        
+        guard let viewModel = dataSource.itemIdentifier(for: indexPath) else { return }
+        let snapshot = dataSource.snapshot()
+        guard let index = snapshot.indexOfItem(viewModel) else { return }
+        
+        presenter.didSelectTask(at: index)
     }
     
     func tableView(
@@ -250,15 +257,16 @@ extension TaskListViewController: UITableViewDelegate {
         point: CGPoint
     ) -> UIContextMenuConfiguration? {
         
-        let viewModel = viewModels[indexPath.row]
+        guard let viewModel = dataSource.itemIdentifier(for: indexPath) else { return nil }
+        let snapshot = dataSource.snapshot()
+        guard let index = snapshot.indexOfItem(viewModel) else { return nil }
         
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
-            
             let editAction = UIAction(
                 title: "Редактировать",
                 image: UIImage(systemName: "pencil")
             ) { [weak self] _ in
-                self?.presenter.didSelectTask(at: indexPath.row)
+                self?.presenter.didSelectTask(at: index)
             }
             
             let deleteAction = UIAction(
@@ -266,7 +274,7 @@ extension TaskListViewController: UITableViewDelegate {
                 image: UIImage(systemName: "trash"),
                 attributes: .destructive
             ) { [weak self] _ in
-                self?.presenter.didRequestDeleteTask(at: indexPath.row)
+                self?.presenter.didRequestDeleteTask(at: index)
             }
             
             return UIMenu(title: viewModel.title, children: [editAction, deleteAction])
