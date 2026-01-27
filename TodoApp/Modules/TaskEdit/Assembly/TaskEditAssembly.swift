@@ -8,23 +8,26 @@
 import UIKit
 
 final class TaskEditAssembly {
-    
-    // MARK: - Private Methods
-    
-    private func createModule(task: TaskEntity?) -> TaskEditViewController {
-        let viewController = TaskEditViewController()
+
+    // MARK: - Private
+
+    private func createModule(task: TaskEntity?, mode: TaskEditViewController.Mode) -> TaskEditViewController {
+        let viewController = TaskEditViewController(mode: mode)
+
         let repository = TaskRepository.shared
         let interactor = TaskEditInteractor(repository: repository)
         let router = TaskEditRouter()
-        let presenter = TaskEditPresenter(task: task)
-        
+        let presenter = TaskEditPresenter(task: task, mode: mode) // ✅ меняем init
+
         viewController.presenter = presenter
+
         presenter.view = viewController
         presenter.interactor = interactor
-        interactor.presenter = presenter
         presenter.router = router
+
+        interactor.presenter = presenter
         router.viewController = viewController
-        
+
         return viewController
     }
 }
@@ -32,12 +35,21 @@ final class TaskEditAssembly {
 // MARK: - TaskEditModuleAssemblyProtocol
 
 extension TaskEditAssembly: TaskEditModuleAssemblyProtocol {
-    
+
     func createModuleForNewTask() -> TaskEditViewController {
-        return createModule(task: nil)
+        createModule(task: nil, mode: .create)
     }
-    
+
     func createModule(for task: TaskEntity) -> TaskEditViewController {
-        return createModule(task: task)
+        createModule(task: task, mode: .edit)
+    }
+
+
+    func createModuleForView(task: TaskEntity) -> TaskEditViewController {
+        createModule(task: task, mode: .view)
+    }
+
+    func createModuleForEdit(task: TaskEntity) -> TaskEditViewController {
+        createModule(task: task, mode: .edit)
     }
 }

@@ -9,4 +9,5 @@ import Foundation
 
 extension Notification.Name {
     static let taskListDidChange = Notification.Name("taskListDidChange")
+    static let taskDidUpdate = Notification.Name("taskDidUpdate")
 }

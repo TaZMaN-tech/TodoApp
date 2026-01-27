@@ -18,30 +18,52 @@ final class TaskEditPresenter {
     // MARK: - Private Properties
     
     private var task: TaskEntity?
+    private let mode: TaskEditViewController.Mode
     
-    private var mode: Mode {
-        return task == nil ? .create : .edit
-    }
     
     // MARK: - Initialization
     
-    init(task: TaskEntity? = nil) {
+    init(task: TaskEntity?, mode: TaskEditViewController.Mode) {
         self.task = task
+        self.mode = mode
+        
+        if mode == .view {
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleTaskDidUpdate(_:)),
+                name: .taskDidUpdate,
+                object: nil
+            )
+        }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    // MARK: - Private methods
+    
+    @objc private func handleTaskDidUpdate(_ notification: Notification) {
+        guard mode == .view,
+              let updated = notification.object as? TaskEntity,
+              updated.id == task?.id
+        else { return }
+
+        task = updated
+        view?.displayTask(title: updated.title, description: updated.taskDescription)
     }
 }
 
-// MARK: - Mode
-
-private extension TaskEditPresenter {
-    enum Mode {
-        case create
-        case edit
-    }
-}
 
 // MARK: - TaskEditViewOutput
 
 extension TaskEditPresenter: TaskEditViewOutput {
+    
+    func didTapEdit() {
+        guard mode == .view, let task else { return }
+        router.openEdit(task: task)
+    }
+    
     
     func viewDidLoad() {
         if let task = task {
@@ -50,6 +72,8 @@ extension TaskEditPresenter: TaskEditViewOutput {
     }
     
     func didTapSave(title: String, description: String) {
+        guard mode != .view else { return }
+        
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         
         guard !trimmedTitle.isEmpty else {
@@ -63,16 +87,20 @@ extension TaskEditPresenter: TaskEditViewOutput {
         view?.showLoading()
         
         switch mode {
+        case .view:
+            view?.hideLoading()
+            return
+
         case .create:
             interactor.createTask(title: trimmedTitle, description: finalDescription)
-            
+
         case .edit:
             guard let existingTask = task else {
                 view?.hideLoading()
                 view?.showError(message: "Ошибка: задача не найдена")
                 return
             }
-            
+
             let updatedTask = TaskEntity(
                 id: existingTask.id,
                 title: trimmedTitle,
@@ -80,7 +108,7 @@ extension TaskEditPresenter: TaskEditViewOutput {
                 createdDate: existingTask.createdDate,
                 isCompleted: existingTask.isCompleted
             )
-            
+
             interactor.updateTask(updatedTask)
         }
     }
@@ -120,6 +148,7 @@ extension TaskEditPresenter: TaskEditInteractorOutput {
             self.view?.hideLoading()
             
             NotificationCenter.default.post(name: .taskListDidChange, object: nil)
+            NotificationCenter.default.post(name: .taskDidUpdate, object: task)
             
             self.router.close()
         }

@@ -9,9 +9,51 @@ import UIKit
 
 final class TaskEditViewController: UIViewController {
     
+    enum Mode {
+        case view
+        case edit
+        case create
+    }
+    
     // MARK: - Properties
     
+    private let mode: Mode
+    private var lastKeyboardBottomInset: CGFloat = 0
+    
     var presenter: TaskEditViewOutput!
+    
+    // MARK: - Navigation Items
+    
+    private lazy var cancelBarButton = UIBarButtonItem(
+        title: "Отмена",
+        style: .plain,
+        target: self,
+        action: #selector(cancelTapped)
+    )
+    
+    private lazy var saveBarButton: UIBarButtonItem = {
+        let button = UIBarButtonItem(
+            title: "Готово",
+            style: .done,
+            target: self,
+            action: #selector(saveTapped)
+        )
+        button.tintColor = .systemYellow
+        return button
+    }()
+    
+    private lazy var editBarButton = UIBarButtonItem(
+        title: "Редактировать",
+        style: .plain,
+        target: self,
+        action: #selector(didTapEdit)
+    )
+    
+    private lazy var activityIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.hidesWhenStopped = true
+        return indicator
+    }()
     
     // MARK: - UI Components
     
@@ -54,30 +96,36 @@ final class TaskEditViewController: UIViewController {
         return view
     }()
     
-    private lazy var activityIndicator: UIActivityIndicatorView = {
-        let indicator = UIActivityIndicatorView(style: .medium)
-        indicator.hidesWhenStopped = true
-        return indicator
-    }()
-    
     // MARK: - Lifecycle
+    
+    init(mode: Mode) {
+        self.mode = mode
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        self.mode = .edit
+        super.init(coder: coder)
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupNavigationBar()
+        applyMode()
         presenter.viewDidLoad()
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        
+        // В режиме просмотра клавиатура не нужна
+        guard mode != .view else { return }
         titleTextField.becomeFirstResponder()
     }
     
     // MARK: - Setup
     
     private func setupUI() {
-        title = "Новая задача"
         view.backgroundColor = .systemBackground
         
         view.addSubview(titleTextField)
@@ -109,23 +157,38 @@ final class TaskEditViewController: UIViewController {
         setupKeyboardHandling()
     }
     
-    private func setupNavigationBar() {
-        let cancelButton = UIBarButtonItem(
-            title: "Отмена",
-            style: .plain,
-            target: self,
-            action: #selector(cancelTapped)
-        )
-        navigationItem.leftBarButtonItem = cancelButton
+    private func applyMode() {
+        switch mode {
+        case .view:
+            title = "Задача"
+            setEditingEnabled(false)
+            
+            navigationItem.leftBarButtonItem = nil
+            navigationItem.rightBarButtonItem = editBarButton
+            
+        case .edit:
+            title = "Редактирование"
+            setEditingEnabled(true)
+            
+            navigationItem.leftBarButtonItem = cancelBarButton
+            navigationItem.rightBarButtonItem = saveBarButton
+            
+        case .create:
+            title = "Новая задача"
+            setEditingEnabled(true)
+            
+            navigationItem.leftBarButtonItem = cancelBarButton
+            navigationItem.rightBarButtonItem = saveBarButton
+        }
+    }
     
-        let saveButton = UIBarButtonItem(
-            title: "Готово",
-            style: .done,
-            target: self,
-            action: #selector(saveTapped)
-        )
-        saveButton.tintColor = .systemYellow
-        navigationItem.rightBarButtonItem = saveButton
+    private func setEditingEnabled(_ enabled: Bool) {
+        titleTextField.isUserInteractionEnabled = enabled
+        descriptionTextView.isEditable = enabled
+        
+        // чтобы поле не "серело"
+        titleTextField.isEnabled = true
+        descriptionTextView.isSelectable = true
     }
     
     private func setupKeyboardHandling() {
@@ -160,24 +223,62 @@ final class TaskEditViewController: UIViewController {
         presenter.didTapSave(title: title, description: description)
     }
     
+    @objc private func didTapEdit() {
+        presenter.didTapEdit()
+    }
+    
     @objc private func dismissKeyboard() {
+        if descriptionTextView.isFirstResponder { return }
         view.endEditing(true)
     }
     
     @objc private func keyboardWillShow(notification: NSNotification) {
-        guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else {
-            return
+        guard mode != .view else { return }
+        guard descriptionTextView.isFirstResponder else { return } // ✅ важно
+        
+        guard
+            let userInfo = notification.userInfo,
+            let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
+        else { return }
+        
+        let keyboardFrameInView = view.convert(keyboardFrame, from: nil)
+        let overlap = max(0, view.bounds.maxY - keyboardFrameInView.minY)
+        let bottomInset = max(0, overlap - view.safeAreaInsets.bottom)
+        
+        guard abs(bottomInset - lastKeyboardBottomInset) > 0.5 else { return }
+        lastKeyboardBottomInset = bottomInset
+        
+        let duration = (userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? NSNumber)?.doubleValue ?? 0.25
+        let curveRaw = (userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? NSNumber)?.intValue ?? 7
+        let options = UIView.AnimationOptions(rawValue: UInt(curveRaw << 16))
+        
+        UIView.animate(withDuration: duration, delay: 0, options: options) {
+            self.descriptionTextView.contentInset.bottom = bottomInset
+            if #available(iOS 13.0, *) {
+                self.descriptionTextView.verticalScrollIndicatorInsets.bottom = bottomInset
+            } else {
+                self.descriptionTextView.scrollIndicatorInsets.bottom = bottomInset
+            }
         }
-        
-        let keyboardHeight = keyboardFrame.height
-        
-        descriptionTextView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: keyboardHeight, right: 0)
-        descriptionTextView.scrollIndicatorInsets = descriptionTextView.contentInset
     }
     
     @objc private func keyboardWillHide(notification: NSNotification) {
-        descriptionTextView.contentInset = .zero
-        descriptionTextView.scrollIndicatorInsets = .zero
+        guard mode != .view else { return }
+        
+        guard lastKeyboardBottomInset > 0 else { return }
+        lastKeyboardBottomInset = 0
+        
+        let userInfo = notification.userInfo
+        let duration = (userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? NSNumber)?.doubleValue ?? 0.25
+        let curveRaw = (userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey] as? NSNumber)?.intValue ?? 7
+        let options = UIView.AnimationOptions(rawValue: UInt(curveRaw << 16))
+        
+        UIView.animate(withDuration: duration, delay: 0, options: options) {
+            if #available(iOS 13.0, *) {
+                self.descriptionTextView.verticalScrollIndicatorInsets = .zero
+            } else {
+                self.descriptionTextView.scrollIndicatorInsets = .zero
+            }            }
     }
     
     // MARK: - Deinitialization
@@ -194,18 +295,20 @@ extension TaskEditViewController: TaskEditViewInput {
     func displayTask(title: String, description: String?) {
         ThreadSafetyHelpers.assertMainThread()
         
-        self.title = "Редактирование"
         titleTextField.text = title
         
-        if let description = description {
+        if let description, !description.isEmpty {
             descriptionTextView.text = description
             descriptionPlaceholder.isHidden = true
+        } else {
+            descriptionTextView.text = ""
+            descriptionPlaceholder.isHidden = false
         }
     }
     
     func showLoading() {
         ThreadSafetyHelpers.assertMainThread()
-       
+        
         let loadingItem = UIBarButtonItem(customView: activityIndicator)
         navigationItem.rightBarButtonItem = loadingItem
         activityIndicator.startAnimating()
@@ -218,18 +321,11 @@ extension TaskEditViewController: TaskEditViewInput {
         ThreadSafetyHelpers.assertMainThread()
         
         activityIndicator.stopAnimating()
- 
-        let saveButton = UIBarButtonItem(
-            title: "Готово",
-            style: .done,
-            target: self,
-            action: #selector(saveTapped)
-        )
-        saveButton.tintColor = .systemYellow
-        navigationItem.rightBarButtonItem = saveButton
+        
+        applyMode()
         
         titleTextField.isEnabled = true
-        descriptionTextView.isEditable = true
+        descriptionTextView.isEditable = (mode != .view)
     }
     
     func showError(message: String) {
@@ -242,7 +338,6 @@ extension TaskEditViewController: TaskEditViewInput {
         )
         
         alert.addAction(UIAlertAction(title: "OK", style: .default))
-        
         present(alert, animated: true)
     }
     
@@ -256,6 +351,7 @@ extension TaskEditViewController: TaskEditViewInput {
 extension TaskEditViewController: UITextFieldDelegate {
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        guard mode != .view else { return false }
         descriptionTextView.becomeFirstResponder()
         return true
     }

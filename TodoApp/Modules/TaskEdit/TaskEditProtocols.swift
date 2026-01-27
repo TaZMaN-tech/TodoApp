@@ -23,6 +23,7 @@ protocol TaskEditViewOutput: AnyObject {
     func viewDidLoad()
     func didTapSave(title: String, description: String)
     func didTapCancel()
+    func didTapEdit()
 }
 
 // MARK: - Interactor Input (Presenter → Interactor)
@@ -45,6 +46,7 @@ protocol TaskEditInteractorOutput: AnyObject {
 
 protocol TaskEditRouterProtocol: AnyObject {
     func close()
+    func openEdit(task: TaskEntity)
 }
 
 // MARK: - Module Assembly Protocol

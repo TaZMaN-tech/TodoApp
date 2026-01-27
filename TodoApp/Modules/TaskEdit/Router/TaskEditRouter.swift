@@ -18,6 +18,12 @@ final class TaskEditRouter {
 
 extension TaskEditRouter: TaskEditRouterProtocol {
     
+    func openEdit(task: TaskEntity) {
+        let editVC = TaskEditAssembly().createModuleForEdit(task: task)
+        viewController?.navigationController?.pushViewController(editVC, animated: true)
+    }
+    
+    
     func close() {
         if viewController?.presentingViewController != nil {
             viewController?.dismiss(animated: true)

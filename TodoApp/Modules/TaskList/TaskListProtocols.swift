@@ -23,6 +23,7 @@ protocol TaskListViewOutput: AnyObject {
     func viewDidLoad()
     func didSelectTask(at index: Int)
     func didRequestDeleteTask(at index: Int)
+    func didRequestEditTask(at index: Int)
     func didToggleTaskCompletion(at index: Int, isCompleted: Bool)
     func didChangeSearchQuery(_ query: String)
     func didTapAddTask()
@@ -57,6 +58,7 @@ protocol TaskListInteractorOutput: AnyObject {
 protocol TaskListRouterProtocol: AnyObject {
     func openCreateTask()
     func openEditTask(_ task: TaskEntity)
+    func openTaskDetails(_ task: TaskEntity)
 }
 
 // MARK: - View Model

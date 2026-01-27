@@ -8,7 +8,7 @@
 import UIKit
 
 final class TaskListViewController: UIViewController {
-
+    
     // MARK: - Section Definition
 
     nonisolated private enum Section: Hashable {
@@ -194,8 +194,6 @@ final class TaskListViewController: UIViewController {
         bottomBar.onAddButtonTapped = { [weak self] in
             self?.presenter.didTapAddTask()
         }
-
-        definesPresentationContext = true
     }
 
     // MARK: - Actions
@@ -333,7 +331,7 @@ extension TaskListViewController: UITableViewDelegate {
                 title: "Редактировать",
                 image: UIImage(systemName: "pencil")
             ) { [weak self] _ in
-                self?.presenter.didSelectTask(at: index)
+                self?.presenter.didRequestEditTask(at: index)
             }
 
             let shareAction = UIAction(

@@ -74,6 +74,16 @@ extension TaskListPresenter: TaskListViewOutput {
         let viewModel = viewModels[index]
         let task = viewModel.entity
         
+        router.openTaskDetails(task)
+    }
+    
+    func didRequestEditTask(at index: Int) {
+        guard index >= 0 && index < viewModels.count else {
+            print("⚠️ Некорректный индекс задачи: \(index)")
+            return
+        }
+
+        let task = viewModels[index].entity
         router.openEditTask(task)
     }
     

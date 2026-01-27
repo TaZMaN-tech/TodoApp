@@ -31,4 +31,9 @@ extension TaskListRouter: TaskListRouterProtocol {
         navigationController.modalPresentationStyle = .fullScreen
         viewController?.present(navigationController, animated: true)
     }
+    
+    func openTaskDetails(_ task: TaskEntity) {
+        let vc = TaskEditAssembly().createModuleForView(task: task)
+        viewController?.navigationController?.pushViewController(vc, animated: true)
+    }
 }
