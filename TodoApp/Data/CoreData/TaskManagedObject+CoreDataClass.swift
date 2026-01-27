@@ -12,8 +12,6 @@ import CoreData
 @objc(TaskManagedObject)
 public class TaskManagedObject: NSManagedObject {
     
-    /// Конвертирует TaskManagedObject в доменную модель TaskEntity
-    /// - Returns: Доменная модель задачи
     func toEntity() -> TaskEntity {
         return TaskEntity(
             id: self.id,
@@ -24,8 +22,6 @@ public class TaskManagedObject: NSManagedObject {
         )
     }
     
-    /// Обновляет TaskManagedObject данными из доменной модели TaskEntity
-    /// - Parameter entity: Доменная модель с обновлёнными данными
     func update(from entity: TaskEntity) {
         self.id = entity.id
         self.title = entity.title
@@ -33,12 +29,7 @@ public class TaskManagedObject: NSManagedObject {
         self.createdDate = entity.createdDate
         self.isCompleted = entity.isCompleted
     }
-    
-    /// Создаёт новый TaskManagedObject из доменной модели
-    /// - Parameters:
-    ///   - entity: Доменная модель задачи
-    ///   - context: Контекст CoreData, в котором будет создан объект
-    /// - Returns: Новый managed object
+   
     static func create(from entity: TaskEntity, in context: NSManagedObjectContext) -> TaskManagedObject {
         let managedObject = TaskManagedObject(context: context)
         managedObject.update(from: entity)

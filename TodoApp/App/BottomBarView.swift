@@ -1,5 +1,5 @@
 //
-//  MainTabBarController.swift
+//  BottomBarView.swift
 //  TodoApp
 //
 //  Created by Тадевос Курдоглян on 27.01.2026.
