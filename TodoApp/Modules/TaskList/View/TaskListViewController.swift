@@ -18,6 +18,7 @@ final class TaskListViewController: UIViewController {
     // MARK: - Properties
     
     var presenter: TaskListViewOutput!
+    var onTasksCountChanged: ((Int) -> Void)?
     
     // MARK: - UI Components
     
@@ -120,14 +121,6 @@ final class TaskListViewController: UIViewController {
         
         navigationController?.navigationBar.prefersLargeTitles = true
         
-        let addButton = UIBarButtonItem(
-            barButtonSystemItem: .add,
-            target: self,
-            action: #selector(addTaskTapped)
-        )
-        addButton.tintColor = .systemYellow
-        navigationItem.rightBarButtonItem = addButton
-        
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
         definesPresentationContext = true
@@ -156,12 +149,28 @@ final class TaskListViewController: UIViewController {
     
     // MARK: - Actions
     
-    @objc private func addTaskTapped() {
-        presenter.didTapAddTask()
-    }
-    
     @objc private func handleRefresh() {
         presenter.didPullToRefresh()
+    }
+    
+    // MARK: - Sharing
+    
+    private func shareTask(viewModel: TaskViewModel) {
+        var textToShare = viewModel.title
+        
+        if let description = viewModel.description {
+            textToShare += "\n\n" + description
+        }
+        
+        textToShare += "\n\n📅 " + viewModel.createdDateString
+        textToShare += "\n" + (viewModel.isCompleted ? "✅ Выполнено" : "⏳ В процессе")
+        
+        let activityVC = UIActivityViewController(
+            activityItems: [textToShare],
+            applicationActivities: nil
+        )
+        
+        present(activityVC, animated: true)
     }
 }
 
@@ -183,6 +192,8 @@ extension TaskListViewController: TaskListViewInput {
         if refreshControl.isRefreshing {
             refreshControl.endRefreshing()
         }
+        
+        onTasksCountChanged?(viewModels.count)
     }
     
     func showLoading() {
@@ -233,6 +244,8 @@ extension TaskListViewController: TaskListViewInput {
         if refreshControl.isRefreshing {
             refreshControl.endRefreshing()
         }
+        
+        onTasksCountChanged?(0)
     }
 }
 
@@ -269,6 +282,13 @@ extension TaskListViewController: UITableViewDelegate {
                 self?.presenter.didSelectTask(at: index)
             }
             
+            let shareAction = UIAction(
+                title: "Поделиться",
+                image: UIImage(systemName: "square.and.arrow.up")
+            ) { [weak self] _ in
+                self?.shareTask(viewModel: viewModel)
+            }
+            
             let deleteAction = UIAction(
                 title: "Удалить",
                 image: UIImage(systemName: "trash"),
@@ -277,7 +297,7 @@ extension TaskListViewController: UITableViewDelegate {
                 self?.presenter.didRequestDeleteTask(at: index)
             }
             
-            return UIMenu(title: viewModel.title, children: [editAction, deleteAction])
+            return UIMenu(title: viewModel.title, children: [editAction, shareAction, deleteAction])
         }
     }
 }
