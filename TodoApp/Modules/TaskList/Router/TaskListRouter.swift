@@ -28,7 +28,7 @@ extension TaskListRouter: TaskListRouterProtocol {
     func openEditTask(_ task: TaskEntity) {
         let taskEditViewController = TaskEditAssembly().createModule(for: task)
         let navigationController = UINavigationController(rootViewController: taskEditViewController)
-        navigationController.modalPresentationStyle = .pageSheet
+        navigationController.modalPresentationStyle = .fullScreen
         viewController?.present(navigationController, animated: true)
     }
 }

@@ -7,75 +7,93 @@
 
 import UIKit
 
-/// Кастомный bottom bar с счётчиком задач и кнопкой добавления
 final class BottomBarView: UIView {
-    
+
     // MARK: - Properties
-    
-    /// Callback при нажатии на кнопку добавления
+
     var onAddButtonTapped: (() -> Void)?
-    
+
     private let tasksCountLabel = UILabel()
     private let addButton = UIButton(type: .custom)
-    
+
+    private var labelCenterYConstraint: NSLayoutConstraint!
+    private var buttonCenterYConstraint: NSLayoutConstraint!
+
     // MARK: - Initialization
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
     }
-    
+
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupUI()
     }
-    
+
     // MARK: - Setup
-    
+
     private func setupUI() {
-        // Фон как у search bar
         backgroundColor = .secondarySystemBackground
-        
-        // Счётчик задач по центру
-        tasksCountLabel.text = "0 Задач"
-        tasksCountLabel.textColor = .systemYellow
-        tasksCountLabel.font = .systemFont(ofSize: 17, weight: .regular)
+
+        tasksCountLabel.text = "0 задач"
+        tasksCountLabel.font = .systemFont(ofSize: 15, weight: .regular)
         tasksCountLabel.textAlignment = .center
+        tasksCountLabel.textColor = .label
         tasksCountLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(tasksCountLabel)
-        
-        // Кнопка добавления справа
+
         let config = UIImage.SymbolConfiguration(pointSize: 22, weight: .regular)
         let image = UIImage(systemName: "square.and.pencil", withConfiguration: config)
         addButton.setImage(image, for: .normal)
-        addButton.tintColor = .yellow
+        addButton.tintColor = .systemYellow
         addButton.translatesAutoresizingMaskIntoConstraints = false
         addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
         addSubview(addButton)
-        
-        // Constraints
+
+        let lift: CGFloat = -6
+
+        labelCenterYConstraint = tasksCountLabel.centerYAnchor.constraint(equalTo: centerYAnchor, constant: lift)
+        buttonCenterYConstraint = addButton.centerYAnchor.constraint(equalTo: centerYAnchor, constant: lift)
+
         NSLayoutConstraint.activate([
-            // Счётчик по центру
             tasksCountLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
-            tasksCountLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
-            
-            // Кнопка справа с большой hit area
+            labelCenterYConstraint,
+
             addButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
-            addButton.centerYAnchor.constraint(equalTo: centerYAnchor),
+            buttonCenterYConstraint,
             addButton.widthAnchor.constraint(equalToConstant: 48),
             addButton.heightAnchor.constraint(equalToConstant: 48)
         ])
     }
-    
+
     // MARK: - Public Methods
-    
-    /// Обновляет счётчик задач
-    /// - Parameter count: Количество задач
+
     func updateTasksCount(_ count: Int) {
-        tasksCountLabel.text = "\(count) Задач"
+        tasksCountLabel.text = "\(count) \(Self.pluralize(count, one: "задача", few: "задачи", many: "задач"))"
     }
-    
+
+    func setLift(_ lift: CGFloat) {
+        labelCenterYConstraint.constant = lift
+        buttonCenterYConstraint.constant = lift
+        layoutIfNeeded()
+    }
+
     @objc private func addButtonTapped() {
         onAddButtonTapped?()
+    }
+
+    // MARK: - Russian pluralization
+
+    private static func pluralize(_ number: Int, one: String, few: String, many: String) -> String {
+        let n = abs(number)
+        let mod100 = n % 100
+        if (11...14).contains(mod100) { return many }
+
+        switch n % 10 {
+        case 1: return one
+        case 2, 3, 4: return few
+        default: return many
+        }
     }
 }
