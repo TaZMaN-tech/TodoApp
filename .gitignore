@@ -1,0 +1,11 @@
+**/.DS_Store
+**/*.xcuserdata/
+**/*.xcuserstate
+
+.swiftpm/
+
+DerivedData/
+
+*.zip
+
+.claude/
