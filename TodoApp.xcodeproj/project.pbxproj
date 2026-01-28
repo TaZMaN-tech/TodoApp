@@ -6,10 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		C09637762F29243E00367E8C /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = C09637752F29243000367E8C /* README.md */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		C03A03382F2148A60037CCEF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -42,6 +38,18 @@
 			);
 			target = C03A031D2F2148A40037CCEF /* TodoApp */;
 		};
+		C096377E2F29DE2600367E8C /* Exceptions for "Screenshots" folder in "TodoApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				empty_state.png,
+				task_create_mode.png,
+				task_edit_mode.png,
+				task_list_dark.png,
+				task_list_light.png,
+				task_view_mode.png,
+			);
+			target = C03A031D2F2148A40037CCEF /* TodoApp */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -61,6 +69,14 @@
 		C03A03442F2148A60037CCEF /* TodoAppUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = TodoAppUITests;
+			sourceTree = "<group>";
+		};
+		C09637772F29DA4900367E8C /* Screenshots */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C096377E2F29DE2600367E8C /* Exceptions for "Screenshots" folder in "TodoApp" target */,
+			);
+			path = Screenshots;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -93,6 +109,7 @@
 		C03A03152F2148A40037CCEF = {
 			isa = PBXGroup;
 			children = (
+				C09637772F29DA4900367E8C /* Screenshots */,
 				C09637752F29243000367E8C /* README.md */,
 				C03A03202F2148A40037CCEF /* TodoApp */,
 				C03A033A2F2148A60037CCEF /* TodoAppTests */,
@@ -128,6 +145,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				C03A03202F2148A40037CCEF /* TodoApp */,
+				C09637772F29DA4900367E8C /* Screenshots */,
 			);
 			name = TodoApp;
 			packageProductDependencies = (
@@ -255,7 +273,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C09637762F29243E00367E8C /* README.md in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

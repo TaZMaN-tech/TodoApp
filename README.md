@@ -2,6 +2,20 @@
 
 iOS приложение для управления задачами с VIPER архитектурой, CoreData и интеграцией с API.
 
+## 📸 Screenshots
+
+| Task List (Dark) | Task List (Light) |
+|------------------|-------------------|
+| ![](Screenshots/task_list_dark.png) | ![](Screenshots/task_list_light.png) |
+
+| View Mode | Edit Mode |
+|----------|-----------|
+| ![](Screenshots/task_view_mode.png) | ![](Screenshots/task_edit_mode.png) |
+
+| Create Task | Empty State |
+|------------|------------|
+| ![](Screenshots/task_create_mode.png) | ![](Screenshots/empty_state.png) |
+
 ## 🎯 Выполненные требования
 
 ✅ Список задач (создание, редактирование, удаление, поиск)
