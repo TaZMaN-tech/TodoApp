@@ -24,8 +24,15 @@ struct BookNookApp: App {
 
     var body: some Scene {
         WindowGroup {
+            // Создаём dependencies один раз на весь lifecycle App
+            // ModelContext из container передаём в DI
             ContentView()
                 .modelContainer(container)
+                .environment(
+                    AppDependencies(
+                        modelContext: ModelContext(container)
+                    )
+                )
         }
     }
 }

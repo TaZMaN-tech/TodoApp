@@ -6,22 +6,26 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
-    // @Environment(\.modelContext) — SwiftData внедряет контекст автоматически
-    // из .modelContainer() который мы поставили в BookNookApp
-    @Environment(\.modelContext) private var modelContext
+
+    // Получаем DI контейнер из environment — он создан один раз в App
+    @Environment(AppDependencies.self) private var deps
+
+    // @State гарантирует что ViewModel создаётся ОДИН РАЗ
+    // и НЕ пересоздаётся при перерисовке ContentView
+    @State private var viewModel: TaskListViewModel?
 
     var body: some View {
-        // Собираем зависимости здесь — единственное место создания графа объектов
-        let repository = TaskRepository(modelContext: modelContext)
-        let networkService = NetworkService()
-        let viewModel = TaskListViewModel(
-            repository: repository,
-            networkService: networkService
-        )
-
-        TaskListView(viewModel: viewModel)
+        if let viewModel {
+            TaskListView(viewModel: viewModel)
+        } else {
+            ProgressView()
+                .onAppear {
+                    // onAppear вызывается один раз при появлении View
+                    // Здесь безопасно создавать ViewModel через DI
+                    viewModel = deps.makeTaskListViewModel()
+                }
+        }
     }
 }
