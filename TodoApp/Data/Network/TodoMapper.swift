@@ -9,23 +9,22 @@ import Foundation
 
 final class TodoMapper {
     
-    static func map(dtos: [TodoDTO]) -> [TaskEntity] {
+    static func map(dtos: [TodoDTO]) -> [TaskItem] {
         return dtos.map { dto in
             map(dto: dto)
         }
     }
     
-    static func map(dto: TodoDTO) -> TaskEntity {
-        return TaskEntity(
+    static func map(dto: TodoDTO) -> TaskItem {
+        return TaskItem(
             id: Int64(dto.id),
             title: dto.todo,
             taskDescription: nil,
-            createdDate: Date(),
             isCompleted: dto.completed
         )
     }
     
-    static func map(response: TodoResponseDTO) -> [TaskEntity] {
+    static func map(response: TodoResponseDTO) -> [TaskItem] {
         return map(dtos: response.todos)
     }
 }
