@@ -6,32 +6,39 @@
 //
 
 import Foundation
+import SwiftData
 
-struct TaskEntity {
-    let id: Int64
-    let title: String
-    let taskDescription: String?
-    let createdDate: Date
-    let isCompleted: Bool
+@Model
+final class TaskItem {
+    @Attribute(.unique) var id: Int64
+    var title: String
+    var taskDescription: String?
+    var createdDate: Date
+    var isCompleted: Bool
     
     init(
         id: Int64,
         title: String,
         taskDescription: String? = nil,
-        createdDate: Date = Date(),
         isCompleted: Bool = false
     ) {
         self.id = id
         self.title = title
         self.taskDescription = taskDescription
-        self.createdDate = createdDate
+        self.createdDate = .now
         self.isCompleted = isCompleted
     }
 }
 
-// MARK: - Equatable
-extension TaskEntity: Equatable {
-    static func == (lhs: TaskEntity, rhs: TaskEntity) -> Bool {
-        return lhs.id == rhs.id
+
+// MARK: - Test Helpers (только для Preview и тестов)
+extension TaskItem {
+    static func mock(
+        id: Int64 = 1,
+        title: String = "Купить продукты",
+        taskDescription: String? = "Молоко и хлеб",
+        isCompleted: Bool = false
+    ) -> TaskItem {
+        TaskItem(id: id, title: title, taskDescription: taskDescription, isCompleted: isCompleted)
     }
 }
