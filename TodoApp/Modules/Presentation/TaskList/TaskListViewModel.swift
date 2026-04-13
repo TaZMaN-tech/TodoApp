@@ -99,6 +99,14 @@ final class TaskListViewModel {
             errorMessage = error.localizedDescription
         }
     }
+    
+    func updateItem(_ item: TaskItem) async {
+        do {
+            try await repository.update(task: item)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
 
     // MARK: - Private
 

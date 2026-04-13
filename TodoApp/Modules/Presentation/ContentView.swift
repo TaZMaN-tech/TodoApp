@@ -6,15 +6,22 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
-    var body: some View {
-        // Временная заглушка — заменим на TabView со всеми экранами
-        // когда напишем TaskListView
-        Text("Migration in progress 🚧")
-    }
-}
+    // @Environment(\.modelContext) — SwiftData внедряет контекст автоматически
+    // из .modelContainer() который мы поставили в BookNookApp
+    @Environment(\.modelContext) private var modelContext
 
-#Preview {
-    ContentView()
+    var body: some View {
+        // Собираем зависимости здесь — единственное место создания графа объектов
+        let repository = TaskRepository(modelContext: modelContext)
+        let networkService = NetworkService()
+        let viewModel = TaskListViewModel(
+            repository: repository,
+            networkService: networkService
+        )
+
+        TaskListView(viewModel: viewModel)
+    }
 }
