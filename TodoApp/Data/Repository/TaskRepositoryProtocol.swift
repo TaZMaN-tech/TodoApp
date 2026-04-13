@@ -21,6 +21,7 @@ protocol TaskRepositoryProtocol {
     
     // MARK: - Update Operation
     
+    @discardableResult
     func update(task: TaskItem) async throws -> TaskItem
     
     // MARK: - Delete Operation

@@ -57,6 +57,7 @@ final class TaskRepository: TaskRepositoryProtocol {
     
     // MARK: - Update Operation
     
+    @discardableResult
     func update(task: TaskItem) async throws -> TaskItem {
         // SwiftData: изменения на @Model объекте отслеживаются автоматически
         // Просто меняй свойства — save() зафиксирует
