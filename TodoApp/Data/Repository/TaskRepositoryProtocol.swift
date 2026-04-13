@@ -7,26 +7,28 @@
 
 import Foundation
 
+@MainActor
 protocol TaskRepositoryProtocol {
     
     // MARK: - Fetch Operations
     
-    func fetchAll(completion: @escaping (Result<[TaskEntity], Error>) -> Void)
-    func search(query: String, completion: @escaping (Result<[TaskEntity], Error>) -> Void)
+    func fetchAll() async throws -> [TaskItem]
+    func search(query: String) async throws -> [TaskItem]
     
     // MARK: - Create Operation
     
-    func create(task: TaskEntity, completion: @escaping (Result<TaskEntity, Error>) -> Void)
+    func create(task: TaskItem) async throws -> TaskItem
     
     // MARK: - Update Operation
     
-    func update(task: TaskEntity, completion: @escaping (Result<TaskEntity, Error>) -> Void)
+    @discardableResult
+    func update(task: TaskItem) async throws -> TaskItem
     
     // MARK: - Delete Operation
     
-    func delete(taskId: Int64, completion: @escaping (Result<Void, Error>) -> Void)
+    func delete(taskId: Int64) async throws
     
     // MARK: - Batch Operations
     
-    func createBatch(tasks: [TaskEntity], completion: @escaping (Result<[TaskEntity], Error>) -> Void)
+    func createBatch(tasks: [TaskItem]) async throws -> [TaskItem]
 }
